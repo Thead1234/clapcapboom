@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Minion Clap Counter 💛</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --yellow: #fdd835;
+      --yellow-dark: #fbc02d;
+      --bg1: #fffde7;
+      --bg2: #fff3e6;
+      --text: #222;
+      --muted: #666;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(to bottom, var(--bg1), var(--bg2));
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 720px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.08);
+      padding: 28px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      color: var(--yellow-dark);
+    }
+    .tag {
+      margin-bottom: 18px;
+      color: var(--muted);
+      font-size: .98rem;
+    }
+    .counter {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin: 8px 0 16px;
+    }
+    .msg {
+      min-height: 42px;
+      font-size: 1rem;
+      color: #444;
+      margin-bottom: 12px;
+    }
+    .gif {
+      display: none;
+      width: 100%;
+      max-width: 420px;
+      height: auto;
+      border-radius: 12px;
+      margin: 14px auto 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      background: var(--yellow);
+      color: #1b1b1b;
+      padding: 14px 26px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease, background .2s;
+      box-shadow: 0 6px 18px rgba(253,216,53,.35);
+      margin: 10px 0 4px;
+    }
+    .btn:active { transform: translateY(1px) scale(.98); }
+    .btn:hover { background: var(--yellow-dark); }
+    .btn:disabled {
+      filter: grayscale(.2);
+      cursor: not-allowed;
+      box-shadow: none;
+      background: #e7e7e7;
+      color: #888;
+    }
+    .final {
+      display: none;
+      margin-top: 10px;
+      font-weight: 600;
+    }
+    footer {
+      margin-top: 14px;
+      font-size: .9rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Minion Clap Counter 🍌</h1>
+    <div class="tag">10 claps • 10 different Minion GIFs • No repeats</div>
+
+    <div class="counter" id="counter">Claps: 0 / 10</div>
+    <button class="btn" id="clapBtn">👏 Clap for Minions</button>
+
+    <div class="msg" id="msg">Press the button to start the Minion madness!</div>
+    <img id="gif" class="gif" alt="Minion GIF will appear here" />
+
+    <div class="final" id="final">🎉 You’ve unlocked all 10 Minions. Banana Boss status achieved!</div>
+    <footer>Tip: Each clap reveals the next unique Minion GIF.</footer>
+  </main>
+
+  <script>
+    // 10 Minion-themed messages (1-to-1 with claps)
+    const messages = [
+      "Minion #1 reporting for duty! 💛",
+      "Minion #2 says BANANA! 🍌",
+      "Minion #3 enters with chaos 🤪",
+      "Minion #4 is vibing 🕺",
+      "Minion #5 brings peak silliness 😂",
+      "Minion #6 unlocks dance mode 🔊",
+      "Minion #7 salutes the clap champion 🫡",
+      "Minion #8 = meme energy 💥",
+      "Minion #9 gearing up for finale 👀",
+      "Minion #10 — the legendary closer 👑"
+    ];
+
+    // Exactly 10 Minion GIFs (unique, ordered, no repeats)
+    // Replace with your own links anytime; order = clap number
+    const gifs = [
+      "https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif",
+      "https://media.giphy.com/media/3o6ZsYn9RWfLN12Ody/giphy.gif",
+      "https://media.giphy.com/media/VbnUQpnihPSIgIXuZv/giphy.gif",
+      "https://media.giphy.com/media/l0Exk8EUzSLsrErEQ/giphy.gif",
+      "https://media.giphy.com/media/3o7abldj0b3rxrZUxW/giphy.gif",
+      "https://media.giphy.com/media/3o6ZsXR5BqerUj3Lyg/giphy.gif",
+      "https://media.giphy.com/media/3orieQEA4Gz8tO3ps8/giphy.gif",
+      "https://media.giphy.com/media/l3vRnGdbUrfpF4c1i/giphy.gif",
+      "https://media.giphy.com/media/WXB88TeARFVvi/giphy.gif",
+      "https://media.giphy.com/media/jUwpNzg9IcyrK/giphy.gif"
+    ];
+
+    // Preload GIFs for smooth display (optional but nice)
+    gifs.forEach(src => { const img = new Image(); img.src = src; });
+
+    let clapCount = 0;
+    const btn = document.getElementById("clapBtn");
+    const counterEl = document.getElementById("counter");
+    const msgEl = document.getElementById("msg");
+    const gifEl = document.getElementById("gif");
+    const finalEl = document.getElementById("final");
+
+    btn.addEventListener("click", () => {
+      if (clapCount >= 10) return; // safety
+
+      clapCount += 1;
+      counterEl.textContent = `Claps: ${clapCount} / 10`;
+
+      // Set message & GIF for this exact clap (1..10)
+      msgEl.textContent = messages[clapCount - 1];
+      gifEl.src = gifs[clapCount - 1];
+      gifEl.style.display = "block";
+
+      if (clapCount === 10) {
+        btn.disabled = true;
+        finalEl.style.display = "block";
+        msgEl.textContent = "All Minions revealed. No more claps needed 😄";
+      }
+    });
+
+    // Optional: allow keyboard Space/Enter to clap too
+    window.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        if (!btn.disabled) btn.click();
+      }
+    });
+  </script>
+</body>
+</html>
